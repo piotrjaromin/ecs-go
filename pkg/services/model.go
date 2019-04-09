@@ -8,3 +8,11 @@ type DeployOutput struct {
 type ListDeploymentsOutput struct {
 	DeploymentIDs []string `json:"deploymentIds"`
 }
+
+type RollbackDeploymentOutput struct {
+	Status        string `json:"status"`
+	StatusMessage string `json:"statusMessage"`
+}
+
+type ContinueDeploymentOutput struct {
+}

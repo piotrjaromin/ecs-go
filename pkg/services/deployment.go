@@ -12,8 +12,8 @@ import (
 
 type Deployment interface {
 	Deploy(clusterName, serviceName, image, codedeployApp, codedeployGroup *string) (*DeployOutput, error)
-	ContinueDeployment(deploymentId *string) error
-	RollbackDeployment(deploymentId *string) error
+	ContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
+	RollbackDeployment(deploymentId *string) (*RollbackDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) (*ListDeploymentsOutput, error)
 }
 
@@ -22,12 +22,25 @@ type DeploymentImpl struct {
 	codedeploy codedeploy.CodeDeploy
 }
 
-func (d DeploymentImpl) ContinueDeployment(deploymentId *string) error {
-	return d.codedeploy.ContinueDeployment(deploymentId)
+func (d DeploymentImpl) ContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error) {
+	_, err := d.codedeploy.ContinueDeployment(deploymentId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ContinueDeploymentOutput{}, nil
 }
 
-func (d DeploymentImpl) RollbackDeployment(deploymentId *string) error {
-	return d.codedeploy.RollbackDeployment(deploymentId)
+func (d DeploymentImpl) RollbackDeployment(deploymentId *string) (*RollbackDeploymentOutput, error) {
+	output, err := d.codedeploy.RollbackDeployment(deploymentId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RollbackDeploymentOutput{
+		Status:        *output.Status,
+		StatusMessage: *output.StatusMessage,
+	}, nil
 }
 
 func (d DeploymentImpl) ListDeployments(codedeployApp, codedeployGroup *string) (*ListDeploymentsOutput, error) {
@@ -36,7 +49,7 @@ func (d DeploymentImpl) ListDeployments(codedeployApp, codedeployGroup *string) 
 		return nil, err
 	}
 
-	ids := make([]string, len(deploymentIDs))
+	ids := make([]string, 0)
 	for _, id := range deploymentIDs {
 		ids = append(ids, *id)
 	}

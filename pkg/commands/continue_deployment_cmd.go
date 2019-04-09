@@ -24,7 +24,12 @@ func NewContinueDeploymentsCmd(deployment services.Deployment) cli.Command {
 			}
 
 			deploymentID := c.String("deploymentId")
-			return deployment.ContinueDeployment(&deploymentID)
+			output, err := deployment.ContinueDeployment(&deploymentID)
+			if err != nil {
+				return err
+			}
+
+			return printOutput(output)
 		},
 	}
 }

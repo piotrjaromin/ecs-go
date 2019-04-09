@@ -17,14 +17,17 @@ var deployStopOnReq = "DEPLOYMENT_STOP_ON_REQUEST"
 var events = []*string{&deployFail, &deployStopOnAlarm, &deployStopOnReq}
 
 var inProgress = "InProgress"
+var ready = "Ready"
+var created = "Created"
+var queued = "Queued"
 
-var includeStatuses = []*string{&inProgress}
+var includeStatuses = []*string{&inProgress, &ready, &created, &queued}
 
 var readyWait = "READY_WAIT"
 
 type CodeDeploy interface {
-	ContinueDeployment(deploymentId *string) error
-	RollbackDeployment(deploymentId *string) error
+	ContinueDeployment(deploymentId *string) (*codedeploy.ContinueDeploymentOutput, error)
+	RollbackDeployment(deploymentId *string) (*codedeploy.StopDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) ([]*string, error)
 	CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error)
 }
@@ -33,18 +36,17 @@ type CodeDeployImpl struct {
 	svc *codedeploy.CodeDeploy
 }
 
-func (d CodeDeployImpl) ContinueDeployment(deploymentId *string) error {
+func (d CodeDeployImpl) ContinueDeployment(deploymentId *string) (*codedeploy.ContinueDeploymentOutput, error) {
 
 	input := &codedeploy.ContinueDeploymentInput{
 		DeploymentId:       deploymentId,
 		DeploymentWaitType: &readyWait,
 	}
 
-	_, err := d.svc.ContinueDeployment(input)
-	return err
+	return d.svc.ContinueDeployment(input)
 }
 
-func (d CodeDeployImpl) RollbackDeployment(deploymentId *string) error {
+func (d CodeDeployImpl) RollbackDeployment(deploymentId *string) (*codedeploy.StopDeploymentOutput, error) {
 
 	autoRollbackEnabled := true
 
@@ -53,8 +55,7 @@ func (d CodeDeployImpl) RollbackDeployment(deploymentId *string) error {
 		DeploymentId:        deploymentId,
 	}
 
-	_, err := d.svc.StopDeployment(input)
-	return err
+	return d.svc.StopDeployment(input)
 }
 
 func (d CodeDeployImpl) ListDeployments(codedeployApp, codedeployGroup *string) ([]*string, error) {
@@ -73,7 +74,6 @@ func (d CodeDeployImpl) ListDeployments(codedeployApp, codedeployGroup *string) 
 }
 
 func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error) {
-
 	desc := fmt.Sprint("Handled by ecs-go at %d", time.Now())
 
 	enabled := true
@@ -112,22 +112,22 @@ func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDef
 
 func appSpec(taskDefinitionWithRevisionArn, containerName, containerPort *string) string {
 	return fmt.Sprintf(`{
-		version: 1,
-		Resources: [
+		"version": 1,
+		"Resources": [
 			{
-				TargetService: {
-					Type: 'AWS::ECS::Service',
-					Properties: {
-						TaskDefinition: %s,
-						LoadBalancerInfo: {
-							ContainerName: %s,
-							ContainerPort: %s,
-						},
-					},
-				},
-			},
-		],
-	}`, taskDefinitionWithRevisionArn, containerName, containerPort)
+				"TargetService": {
+					"Type": "AWS::ECS::Service",
+					"Properties": {
+						"TaskDefinition": "%s",
+						"LoadBalancerInfo": {
+							"ContainerName": "%s",
+							"ContainerPort": %s
+						}
+					}
+				}
+			}
+		]
+	}`, *taskDefinitionWithRevisionArn, *containerName, *containerPort)
 }
 
 func NewCodeDeploy(sess *session.Session) CodeDeploy {

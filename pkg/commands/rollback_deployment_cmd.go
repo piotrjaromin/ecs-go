@@ -24,7 +24,12 @@ func NewRollbackDeploymentCmd(deployment services.Deployment) cli.Command {
 			}
 
 			deploymentID := c.String("deploymentId")
-			return deployment.RollbackDeployment(&deploymentID)
+			output, err := deployment.RollbackDeployment(&deploymentID)
+			if err != nil {
+				return err
+			}
+
+			return printOutput(output)
 		},
 	}
 }
