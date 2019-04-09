@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/urfave/cli"
 )
@@ -18,5 +19,14 @@ func validateRequiredFlags(c *cli.Context, flags []string) error {
 		return fmt.Errorf(errMsg)
 	}
 
+	return nil
+}
+
+func printOutput(output interface{}) error {
+	data, err := json.Marshal(output)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", data)
 	return nil
 }

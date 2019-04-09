@@ -1,14 +1,14 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/piotrjaromin/ecs-go/pkg/services"
 	"github.com/urfave/cli"
 )
 
 var requiredDeployFlags = []string{"clusterName", "serviceName", "image"}
 
 // NewDeployCmd creates cli command for deploying new version of ecs service
-func NewDeployCmd() cli.Command {
+func NewDeployCmd(deployment services.Deployment) cli.Command {
 	return cli.Command{
 		Name:    "deploy",
 		Aliases: []string{"d"},
@@ -40,8 +40,27 @@ func NewDeployCmd() cli.Command {
 				return err
 			}
 
-			fmt.Println("creating deployment: ", c.Args().First())
-			return nil
+			clusterName := c.String("clusterName")
+			serviceName := c.String("serviceName")
+			image := c.String("image")
+
+			codedeployGroup := c.String("codedeployGroup")
+			codedeployApp := c.String("codedeployApp")
+
+			if len(codedeployGroup) == 0 {
+				codedeployGroup = serviceName
+			}
+
+			if len(codedeployApp) == 0 {
+				codedeployApp = serviceName
+			}
+
+			output, err := deployment.Deploy(&clusterName, &serviceName, &image, &codedeployApp, &codedeployGroup)
+			if err != nil {
+				return err
+			}
+
+			return printOutput(output)
 		},
 	}
 }

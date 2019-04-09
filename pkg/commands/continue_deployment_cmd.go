@@ -1,11 +1,13 @@
 package commands
 
 import (
-	"fmt"
+	"github.com/piotrjaromin/ecs-go/pkg/services"
 	"github.com/urfave/cli"
 )
 
-func NewContinueDeploymentsCmd() cli.Command {
+var requiredContinueDeployFlags = []string{"deploymentId"}
+
+func NewContinueDeploymentsCmd(deployment services.Deployment) cli.Command {
 	return cli.Command{
 		Name:    "continue-deployment",
 		Aliases: []string{"cd"},
@@ -17,8 +19,12 @@ func NewContinueDeploymentsCmd() cli.Command {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			fmt.Println("creating deployment: ", c.Args().First())
-			return nil
+			if err := validateRequiredFlags(c, requiredContinueDeployFlags); err != nil {
+				return err
+			}
+
+			deploymentID := c.String("deploymentId")
+			return deployment.ContinueDeployment(&deploymentID)
 		},
 	}
 }
