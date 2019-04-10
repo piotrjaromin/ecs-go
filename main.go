@@ -26,6 +26,11 @@ func main() {
 		commands.NewRollbackDeploymentCmd(deploySvc),
 	}
 
+	app.Name = "ecs integration for codedeploy"
+	app.Description = "Cli application that trigger AWS ECS deployments through AWS Codedeploy service"
+	app.Version = "1.0.0"
+	app.Usage = ""
+
 	err = app.Run(os.Args)
 	if err != nil {
 		log.Fatal(err)
