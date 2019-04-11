@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/codedeploy"
+	"github.com/aws/aws-sdk-go/service/codedeploy/codedeployiface"
 	"time"
 )
 
@@ -26,33 +27,33 @@ var includeStatuses = []*string{&inProgress, &ready, &created, &queued}
 var readyWait = "READY_WAIT"
 
 type CodeDeploy interface {
-	ContinueDeployment(deploymentId *string) (*codedeploy.ContinueDeploymentOutput, error)
-	RollbackDeployment(deploymentId *string) (*codedeploy.StopDeploymentOutput, error)
+	ContinueDeployment(deploymentID *string) (*codedeploy.ContinueDeploymentOutput, error)
+	RollbackDeployment(deploymentID *string) (*codedeploy.StopDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) ([]*string, error)
 	CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error)
 }
 
 type CodeDeployImpl struct {
-	svc *codedeploy.CodeDeploy
+	svc codedeployiface.CodeDeployAPI
 }
 
-func (d CodeDeployImpl) ContinueDeployment(deploymentId *string) (*codedeploy.ContinueDeploymentOutput, error) {
+func (d CodeDeployImpl) ContinueDeployment(deploymentID *string) (*codedeploy.ContinueDeploymentOutput, error) {
 
 	input := &codedeploy.ContinueDeploymentInput{
-		DeploymentId:       deploymentId,
+		DeploymentId:       deploymentID,
 		DeploymentWaitType: &readyWait,
 	}
 
 	return d.svc.ContinueDeployment(input)
 }
 
-func (d CodeDeployImpl) RollbackDeployment(deploymentId *string) (*codedeploy.StopDeploymentOutput, error) {
+func (d CodeDeployImpl) RollbackDeployment(deploymentID *string) (*codedeploy.StopDeploymentOutput, error) {
 
 	autoRollbackEnabled := true
 
 	input := &codedeploy.StopDeploymentInput{
 		AutoRollbackEnabled: &autoRollbackEnabled,
-		DeploymentId:        deploymentId,
+		DeploymentId:        deploymentID,
 	}
 
 	return d.svc.StopDeployment(input)
@@ -74,7 +75,8 @@ func (d CodeDeployImpl) ListDeployments(codedeployApp, codedeployGroup *string) 
 }
 
 func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error) {
-	desc := fmt.Sprint("Handled by ecs-go at %d", time.Now())
+
+	desc := fmt.Sprintf("Handled by ecs-go at %v", time.Now())
 
 	enabled := true
 
