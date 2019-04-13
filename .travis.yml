@@ -16,5 +16,6 @@ script:
 
 env:
   global:
+  - GO111MODULE=on
   - NAME=ecs-go
   - COMMIT=${TRAVIS_COMMIT::8}
