@@ -79,6 +79,17 @@ func (e ECSImpl) GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, err
 	return out.TaskDefinition, nil
 }
 
+// func (e ECSImpl) CreateTaskDefinition() (*ecs.TaskDefinition, error) {
+// 	input := ecs.RegisterTaskDefinitionInput{}
+
+// 	out, err := e.svc.RegisterTaskDefinition(input)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+
+// 	return out.TaskDefinition, nil
+// }
+
 func NewEcs(sess *session.Session) ECS {
 
 	return &ECSImpl{

@@ -10,9 +10,6 @@ func GetSession() (*session.Session, error) {
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		AssumeRoleTokenProvider: stscreds.StdinTokenProvider,
 		SharedConfigState:       session.SharedConfigEnable,
-		// Config: aws.Config{
-		// 	Region: region,
-		// },
 	}))
 
 	if sess == nil {

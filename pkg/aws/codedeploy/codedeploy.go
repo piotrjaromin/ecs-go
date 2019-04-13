@@ -3,28 +3,12 @@ package codedeploy
 import (
 	"crypto/sha256"
 	"fmt"
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/codedeploy"
 	"github.com/aws/aws-sdk-go/service/codedeploy/codedeployiface"
 	"time"
 )
-
-var appSec = "AppSpecContent"
-
-var deployFail = "DEPLOYMENT_FAILURE"
-var deployStopOnAlarm = "DEPLOYMENT_STOP_ON_ALARM"
-var deployStopOnReq = "DEPLOYMENT_STOP_ON_REQUEST"
-
-var events = []*string{&deployFail, &deployStopOnAlarm, &deployStopOnReq}
-
-var inProgress = "InProgress"
-var ready = "Ready"
-var created = "Created"
-var queued = "Queued"
-
-var includeStatuses = []*string{&inProgress, &ready, &created, &queued}
-
-var readyWait = "READY_WAIT"
 
 type CodeDeploy interface {
 	ContinueDeployment(deploymentID *string) (*codedeploy.ContinueDeploymentOutput, error)
@@ -41,7 +25,7 @@ func (d CodeDeployImpl) ContinueDeployment(deploymentID *string) (*codedeploy.Co
 
 	input := &codedeploy.ContinueDeploymentInput{
 		DeploymentId:       deploymentID,
-		DeploymentWaitType: &readyWait,
+		DeploymentWaitType: aws.String("READY_WAIT"),
 	}
 
 	return d.svc.ContinueDeployment(input)
@@ -64,7 +48,7 @@ func (d CodeDeployImpl) ListDeployments(codedeployApp, codedeployGroup *string) 
 	input := &codedeploy.ListDeploymentsInput{
 		ApplicationName:     codedeployApp,
 		DeploymentGroupName: codedeployGroup,
-		IncludeOnlyStatuses: includeStatuses,
+		IncludeOnlyStatuses: []*string{aws.String("InProgress"), aws.String("Ready"), aws.String("Created"), aws.String("Queued")},
 	}
 
 	output, err := d.svc.ListDeployments(input)
@@ -93,14 +77,14 @@ func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDef
 		Description:         &desc,
 		AutoRollbackConfiguration: &codedeploy.AutoRollbackConfiguration{
 			Enabled: &enabled,
-			Events:  events,
+			Events:  []*string{aws.String("DEPLOYMENT_FAILURE"), aws.String("DEPLOYMENT_STOP_ON_ALARM"), aws.String("DEPLOYMENT_STOP_ON_REQUEST")},
 		},
 		Revision: &codedeploy.RevisionLocation{
 			AppSpecContent: &codedeploy.AppSpecContent{
 				Content: &appSecContent,
 				Sha256:  &appSecSha256,
 			},
-			RevisionType: &appSec,
+			RevisionType: aws.String("AppSpecContent"),
 		},
 	}
 	output, err := d.svc.CreateDeployment(input)

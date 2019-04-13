@@ -24,6 +24,15 @@ func main() {
 		commands.NewContinueDeploymentsCmd(deploySvc),
 		commands.NewListDeploymentsCmd(deploySvc),
 		commands.NewRollbackDeploymentCmd(deploySvc),
+
+		// TODO for now
+		// commands.WaitForStateCmd(deploySvc),
+		// commands.ContinueLatestDeployment(deploySvc),
+		// commands.RollbackLatestDeployment(deploySvc),
+
+		// TODO for Future
+		// commands.CreateTaskDefinition(deploySvc),
+		// commands.CreateECSService(deploySvc),
 	}
 
 	app.Name = "ecs integration for codedeploy"
