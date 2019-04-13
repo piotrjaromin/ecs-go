@@ -1,7 +1,7 @@
 FROM golang:alpine AS build
 ADD . /src
 
-RUN apk add git
+RUN apk add -U --no-cache ca-certificates git
 
 RUN cd /src && \
     go mod vendor && \
@@ -11,6 +11,7 @@ RUN cd /src && \
 FROM alpine as bare
 WORKDIR /app
 
+COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /src/ecs-go /app/
 
 RUN apk add jq
