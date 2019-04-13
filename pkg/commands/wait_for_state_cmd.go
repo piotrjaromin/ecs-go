@@ -21,22 +21,29 @@ func NewWaitForStateCmd(deployment services.Deployment) cli.Command {
 				Name:  "state",
 				Usage: "state which given deployment should reach",
 			},
+			cli.IntFlag{
+				Name:  "waitTime",
+				Usage: "max time in seconds after which this command will end, defaults to 30 minutes",
+			},
 		},
 		Action: func(c *cli.Context) error {
 			if err := validateRequiredFlags(c, requiredWaitForStateFlags); err != nil {
 				return err
 			}
 
-			// deploymentID := c.String("deploymentId")
-			// state := c.String("state")
+			deploymentID := c.String("deploymentId")
+			state := c.String("state")
+			waitTime := c.Int("waitTime")
+			if waitTime == 0 {
+				waitTime = 30 * 60 // by default wait 30 minutes
+			}
 
-			return nil
-			// output, err := deployment.RollbackLatestDeployment(&codedeployApp, &codedeployGroup)
-			// if err != nil {
-			// 	return err
-			// }
+			output, err := deployment.WaitForState(&deploymentID, &state, waitTime)
+			if err != nil {
+				return err
+			}
 
-			// return printOutput(output)
+			return printOutput(output)
 		},
 	}
 }

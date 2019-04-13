@@ -17,6 +17,7 @@ type Deployment interface {
 	ListDeployments(codedeployApp, codedeployGroup *string) (*ListDeploymentsOutput, error)
 	RollbackLatestDeployment(codedeployApp, codedeployGroup *string) (*RollbackLatestOutput, error)
 	ContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error)
+	WaitForState(deploymentId, state *string, waitTime int) (*WaitForStateOutput, error)
 }
 
 type DeploymentImpl struct {
@@ -142,6 +143,11 @@ func (d DeploymentImpl) ContinueLatestDeployment(codedeployApp, codedeployGroup 
 	return &ContinueLatestOutput{
 		DeploymentID: deploymentID,
 	}, nil
+}
+
+func (d DeploymentImpl) WaitForState(deploymentId, state *string, waitTime int) (*WaitForStateOutput, error) {
+
+	return nil, nil
 }
 
 func NewDeployment() (Deployment, error) {

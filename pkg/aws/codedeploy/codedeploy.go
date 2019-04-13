@@ -15,6 +15,7 @@ type CodeDeploy interface {
 	RollbackDeployment(deploymentID *string) (*codedeploy.StopDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) ([]*string, error)
 	CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error)
+	WaitForSate(deploymentID *string, state *string, waitTimeInSeconds int) error
 }
 
 type CodeDeployImpl struct {
@@ -94,6 +95,40 @@ func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDef
 	}
 
 	return output.DeploymentId, nil
+}
+
+func (d CodeDeployImpl) WaitForSate(deploymentID *string, state *string, waitTimeInSeconds int) error {
+	waitUntil := time.Now().Local().Add(time.Second * time.Duration(waitTimeInSeconds))
+	getState := func() (*string, error) {
+		input := codedeploy.GetDeploymentInput{DeploymentId: deploymentID}
+		output, err := d.svc.GetDeployment(&input)
+		if err != nil {
+			return nil, err
+		}
+
+		return output.DeploymentInfo.Status, nil
+	}
+
+	currentState, err := getState()
+	if err != nil {
+		return err
+	}
+
+	for *currentState != *state {
+
+		time.Sleep(time.Second)
+
+		if time.Now().After(waitUntil) {
+			return fmt.Errorf("Wait time finished (%d seconds) and desired %s state was not reached", waitTimeInSeconds, *state)
+		}
+
+		currentState, err = getState()
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func appSpec(taskDefinitionWithRevisionArn, containerName, containerPort *string) string {

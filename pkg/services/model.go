@@ -25,5 +25,5 @@ type RollbackLatestOutput struct {
 	DeploymentID string `json:"deploymentId"`
 }
 
-type WaitForStateCmd struct {
+type WaitForStateOutput struct {
 }
