@@ -15,6 +15,8 @@ type Deployment interface {
 	ContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
 	RollbackDeployment(deploymentId *string) (*RollbackDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) (*ListDeploymentsOutput, error)
+	RollbackLatestDeployment(codedeployApp, codedeployGroup *string) (*RollbackLatestOutput, error)
+	ContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error)
 }
 
 type DeploymentImpl struct {
@@ -98,6 +100,48 @@ func getFamilyNameFromArn(taskDefArn string) string {
 	familyWithRevision := strings.Split(taskDefArn, "/")[1]
 	family := strings.Split(familyWithRevision, ":")[0]
 	return family
+}
+
+func (d DeploymentImpl) RollbackLatestDeployment(codedeployApp, codedeployGroup *string) (*RollbackLatestOutput, error) {
+	deployments, err := d.ListDeployments(codedeployApp, codedeployGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(deployments.DeploymentIDs) == 0 {
+		return nil, fmt.Errorf("No running deployments found")
+	}
+
+	deploymentID := deployments.DeploymentIDs[0]
+	_, err = d.RollbackDeployment(&deploymentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &RollbackLatestOutput{
+		DeploymentID: deploymentID,
+	}, nil
+}
+
+func (d DeploymentImpl) ContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error) {
+	deployments, err := d.ListDeployments(codedeployApp, codedeployGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(deployments.DeploymentIDs) == 0 {
+		return nil, fmt.Errorf("No running deployments found")
+	}
+
+	deploymentID := deployments.DeploymentIDs[0]
+	_, err = d.ContinueDeployment(&deploymentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ContinueLatestOutput{
+		DeploymentID: deploymentID,
+	}, nil
 }
 
 func NewDeployment() (Deployment, error) {

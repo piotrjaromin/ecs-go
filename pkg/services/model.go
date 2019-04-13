@@ -16,3 +16,14 @@ type RollbackDeploymentOutput struct {
 
 type ContinueDeploymentOutput struct {
 }
+
+type ContinueLatestOutput struct {
+	DeploymentID string `json:"deploymentId"`
+}
+
+type RollbackLatestOutput struct {
+	DeploymentID string `json:"deploymentId"`
+}
+
+type WaitForStateCmd struct {
+}
