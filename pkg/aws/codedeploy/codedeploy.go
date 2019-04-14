@@ -115,7 +115,6 @@ func (d CodeDeployImpl) WaitForSate(deploymentID *string, state *string, waitTim
 	}
 
 	for *currentState != *state {
-
 		time.Sleep(time.Second)
 
 		if time.Now().After(waitUntil) {

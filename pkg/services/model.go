@@ -26,4 +26,6 @@ type RollbackLatestOutput struct {
 }
 
 type WaitForStateOutput struct {
+	Waited string `json:"waited"`
+	State  string `json:"state"`
 }

@@ -1,11 +1,15 @@
 package commands
 
 import (
+	"fmt"
 	"github.com/piotrjaromin/ecs-go/pkg/services"
 	"github.com/urfave/cli"
+	"strings"
 )
 
-var requiredWaitForStateFlags = []string{"deploymentId", "state"}
+var requiredWaitForStateFlags = []string{"deploymentId"}
+
+var validStates = []string{"InProgress", "Ready", "Created", "Queued", "Stopped", "Failed", "Succeeded"}
 
 func NewWaitForStateCmd(deployment services.Deployment) cli.Command {
 	return cli.Command{
@@ -19,7 +23,7 @@ func NewWaitForStateCmd(deployment services.Deployment) cli.Command {
 			},
 			cli.StringFlag{
 				Name:  "state",
-				Usage: "state which given deployment should reach",
+				Usage: "state which given deployment should reach, by deafult it is 'Ready'",
 			},
 			cli.IntFlag{
 				Name:  "waitTime",
@@ -33,6 +37,15 @@ func NewWaitForStateCmd(deployment services.Deployment) cli.Command {
 
 			deploymentID := c.String("deploymentId")
 			state := c.String("state")
+
+			if len(state) == 0 {
+				state = "Ready"
+			}
+
+			if !hasString(state, validStates) {
+				return fmt.Errorf("Invalid state provided %s, valid values are: %s", state, strings.Join(validStates, ", "))
+			}
+
 			waitTime := c.Int("waitTime")
 			if waitTime == 0 {
 				waitTime = 30 * 60 // by default wait 30 minutes
@@ -46,4 +59,14 @@ func NewWaitForStateCmd(deployment services.Deployment) cli.Command {
 			return printOutput(output)
 		},
 	}
+}
+
+func hasString(searched string, array []string) bool {
+	for _, current := range array {
+		if searched == current {
+			return true
+		}
+	}
+
+	return false
 }

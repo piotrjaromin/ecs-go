@@ -4,6 +4,7 @@ import (
 	"github.com/piotrjaromin/ecs-go/pkg/aws"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/codedeploy"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/ecs"
+	"time"
 
 	"fmt"
 	"strconv"
@@ -147,7 +148,19 @@ func (d DeploymentImpl) ContinueLatestDeployment(codedeployApp, codedeployGroup 
 
 func (d DeploymentImpl) WaitForState(deploymentId, state *string, waitTime int) (*WaitForStateOutput, error) {
 
-	return nil, nil
+	startTime := time.Now()
+
+	err := d.codedeploy.WaitForSate(deploymentId, state, waitTime)
+	if err != nil {
+		return nil, err
+	}
+
+	timeTaken := time.Now().Sub(startTime)
+
+	return &WaitForStateOutput{
+		State:  *state,
+		Waited: fmt.Sprintf("%f", timeTaken.Seconds()),
+	}, nil
 }
 
 func NewDeployment() (Deployment, error) {
