@@ -28,6 +28,7 @@ func main() {
 		commands.NewWaitForStateCmd(deploySvc),
 		commands.NewContinueLatestDeploymentCmd(deploySvc),
 		commands.NewRollbackLatestDeploymentCmd(deploySvc),
+		commands.NewWaitForLatestCmd(deploySvc),
 
 		// TODO for Future
 		// commands.CreateTaskDefinition(deploySvc),

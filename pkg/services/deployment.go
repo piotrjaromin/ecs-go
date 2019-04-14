@@ -19,6 +19,7 @@ type Deployment interface {
 	RollbackLatestDeployment(codedeployApp, codedeployGroup *string) (*RollbackLatestOutput, error)
 	ContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error)
 	WaitForState(deploymentId, state *string, waitTime int) (*WaitForStateOutput, error)
+	WaitForLatest(codedeployApp, codedeployGroup, state *string, waitTime int) (*WaitForStateOutput, error)
 }
 
 type DeploymentImpl struct {
@@ -105,44 +106,34 @@ func getFamilyNameFromArn(taskDefArn string) string {
 }
 
 func (d DeploymentImpl) RollbackLatestDeployment(codedeployApp, codedeployGroup *string) (*RollbackLatestOutput, error) {
-	deployments, err := d.ListDeployments(codedeployApp, codedeployGroup)
+	deploymentID, err := d.getLatestDeployment(codedeployApp, codedeployGroup)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(deployments.DeploymentIDs) == 0 {
-		return nil, fmt.Errorf("No running deployments found")
-	}
-
-	deploymentID := deployments.DeploymentIDs[0]
-	_, err = d.RollbackDeployment(&deploymentID)
+	_, err = d.RollbackDeployment(deploymentID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &RollbackLatestOutput{
-		DeploymentID: deploymentID,
+		DeploymentID: *deploymentID,
 	}, nil
 }
 
 func (d DeploymentImpl) ContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error) {
-	deployments, err := d.ListDeployments(codedeployApp, codedeployGroup)
+	deploymentID, err := d.getLatestDeployment(codedeployApp, codedeployGroup)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(deployments.DeploymentIDs) == 0 {
-		return nil, fmt.Errorf("No running deployments found")
-	}
-
-	deploymentID := deployments.DeploymentIDs[0]
-	_, err = d.ContinueDeployment(&deploymentID)
+	_, err = d.ContinueDeployment(deploymentID)
 	if err != nil {
 		return nil, err
 	}
 
 	return &ContinueLatestOutput{
-		DeploymentID: deploymentID,
+		DeploymentID: *deploymentID,
 	}, nil
 }
 
@@ -161,6 +152,42 @@ func (d DeploymentImpl) WaitForState(deploymentId, state *string, waitTime int) 
 		State:  *state,
 		Waited: fmt.Sprintf("%f", timeTaken.Seconds()),
 	}, nil
+}
+
+func (d DeploymentImpl) WaitForLatest(codedeployApp, codedeployGroup, state *string, waitTime int) (*WaitForStateOutput, error) {
+
+	startTime := time.Now()
+	deploymentID, err := d.getLatestDeployment(codedeployApp, codedeployGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.codedeploy.WaitForSate(deploymentID, state, waitTime)
+	if err != nil {
+		return nil, err
+	}
+
+	timeTaken := time.Now().Sub(startTime)
+
+	return &WaitForStateOutput{
+		State:  *state,
+		Waited: fmt.Sprintf("%f", timeTaken.Seconds()),
+	}, nil
+}
+
+func (d DeploymentImpl) getLatestDeployment(codedeployApp, codedeployGroup *string) (*string, error) {
+	deployments, err := d.ListDeployments(codedeployApp, codedeployGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(deployments.DeploymentIDs) == 0 {
+		return nil, fmt.Errorf("No running deployments found")
+	}
+
+	deploymentID := deployments.DeploymentIDs[0]
+
+	return &deploymentID, nil
 }
 
 func NewDeployment() (Deployment, error) {
