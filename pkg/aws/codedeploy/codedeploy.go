@@ -60,11 +60,8 @@ func (d CodeDeployImpl) ListDeployments(codedeployApp, codedeployGroup *string) 
 }
 
 func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error) {
-
 	desc := fmt.Sprintf("Handled by ecs-go at %v", time.Now())
-
 	enabled := true
-
 	appSecContent := appSpec(taskDefinitionArn, containerName, containerPort)
 
 	h := sha256.New()
@@ -105,7 +102,6 @@ func (d CodeDeployImpl) WaitForSate(deploymentID *string, state *string, waitTim
 		if err != nil {
 			return nil, err
 		}
-
 		return output.DeploymentInfo.Status, nil
 	}
 
@@ -116,7 +112,6 @@ func (d CodeDeployImpl) WaitForSate(deploymentID *string, state *string, waitTim
 
 	for *currentState != *state {
 		time.Sleep(time.Second)
-
 		if time.Now().After(waitUntil) {
 			return fmt.Errorf("Wait time finished (%d seconds) and desired %s state was not reached", waitTimeInSeconds, *state)
 		}
