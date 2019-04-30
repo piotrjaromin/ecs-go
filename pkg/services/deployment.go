@@ -13,9 +13,10 @@ import (
 
 type Deployment interface {
 	Deploy(clusterName, serviceName, image, codedeployApp, codedeployGroup *string) (*DeployOutput, error)
+	Scale(clusterName, serviceName *string, count uint) (*GenericOutput, error)
 	ContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
 	ForceContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
-	RollbackDeployment(deploymentId *string) (*RollbackDeploymentOutput, error)
+	RollbackDeployment(deploymentId *string) (*GenericOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) (*ListDeploymentsOutput, error)
 	RollbackLatestDeployment(codedeployApp, codedeployGroup *string) (*RollbackLatestOutput, error)
 	ContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error)
@@ -47,13 +48,13 @@ func (d DeploymentImpl) ForceContinueDeployment(deploymentId *string) (*Continue
 	return &ContinueDeploymentOutput{}, nil
 }
 
-func (d DeploymentImpl) RollbackDeployment(deploymentId *string) (*RollbackDeploymentOutput, error) {
+func (d DeploymentImpl) RollbackDeployment(deploymentId *string) (*GenericOutput, error) {
 	output, err := d.codedeploy.RollbackDeployment(deploymentId)
 	if err != nil {
 		return nil, err
 	}
 
-	return &RollbackDeploymentOutput{
+	return &GenericOutput{
 		Status:        *output.Status,
 		StatusMessage: *output.StatusMessage,
 	}, nil
@@ -107,6 +108,25 @@ func (d DeploymentImpl) Deploy(clusterName, serviceName, image, codedeployApp, c
 	return &DeployOutput{
 		DeploymentID:      *deployment,
 		TaskDefinitionArn: *updatedTaskDef.TaskDefinitionArn,
+	}, nil
+}
+
+func (d DeploymentImpl) Scale(clusterName, serviceName *string, count uint) (*GenericOutput, error) {
+	svc, err := d.ecs.GetService(clusterName, serviceName)
+	if err != nil {
+		return nil, err
+	}
+
+	svc.SetDesiredCount(int64(count))
+
+	_, err = d.ecs.UpdateService(svc)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GenericOutput{
+		Status:        "Accepted",
+		StatusMessage: "Scaling instances started",
 	}, nil
 }
 

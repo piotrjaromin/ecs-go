@@ -21,6 +21,7 @@ func main() {
 
 	app.Commands = []cli.Command{
 		commands.NewDeployCmd(deploySvc),
+		commands.NewScaleCmd(deploySvc),
 		commands.NewContinueDeploymentsCmd(deploySvc),
 		commands.NewForceContinueDeploymentsCmd(deploySvc),
 		commands.NewListDeploymentsCmd(deploySvc),

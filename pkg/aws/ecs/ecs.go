@@ -10,6 +10,7 @@ import (
 type ECS interface {
 	GetService(clusterName, serviceName *string) (*ecs.Service, error)
 	GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
+	UpdateService(toUpdate *ecs.Service) (*ecs.Service, error)
 	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string) (*ecs.TaskDefinition, error)
 }
 
@@ -36,10 +37,27 @@ func (e ECSImpl) GetService(clusterName, serviceName *string) (*ecs.Service, err
 	return svcList.Services[0], nil
 }
 
+func (e ECSImpl) UpdateService(toUpdate *ecs.Service) (*ecs.Service, error) {
+
+	input := &ecs.UpdateServiceInput{
+		Cluster:                 toUpdate.ClusterArn,
+		DeploymentConfiguration: toUpdate.DeploymentConfiguration,
+		DesiredCount:            toUpdate.DesiredCount,
+		Service:                 toUpdate.ServiceName,
+	}
+
+	updateOutput, err := e.svc.UpdateService(input)
+	if err != nil {
+		return nil, err
+	}
+
+	return updateOutput.Service, nil
+}
+
 func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string) (*ecs.TaskDefinition, error) {
 
 	if len(taskDef.ContainerDefinitions) == 0 {
-		return nil, fmt.Errorf("No task definitions defnied")
+		return nil, fmt.Errorf("No task definitions defined")
 	}
 
 	taskDef.ContainerDefinitions[0].Image = image
