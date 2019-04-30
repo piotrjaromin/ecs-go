@@ -14,10 +14,12 @@ import (
 type Deployment interface {
 	Deploy(clusterName, serviceName, image, codedeployApp, codedeployGroup *string) (*DeployOutput, error)
 	ContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
+	ForceContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
 	RollbackDeployment(deploymentId *string) (*RollbackDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) (*ListDeploymentsOutput, error)
 	RollbackLatestDeployment(codedeployApp, codedeployGroup *string) (*RollbackLatestOutput, error)
 	ContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error)
+	ForceContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error)
 	WaitForState(deploymentId, state *string, waitTime int) (*WaitForStateOutput, error)
 	WaitForLatest(codedeployApp, codedeployGroup, state *string, waitTime int) (*WaitForStateOutput, error)
 }
@@ -29,6 +31,15 @@ type DeploymentImpl struct {
 
 func (d DeploymentImpl) ContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error) {
 	_, err := d.codedeploy.ContinueDeployment(deploymentId)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ContinueDeploymentOutput{}, nil
+}
+
+func (d DeploymentImpl) ForceContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error) {
+	_, err := d.codedeploy.ForceContinueDeployment(deploymentId)
 	if err != nil {
 		return nil, err
 	}
@@ -128,6 +139,22 @@ func (d DeploymentImpl) ContinueLatestDeployment(codedeployApp, codedeployGroup 
 	}
 
 	_, err = d.ContinueDeployment(deploymentID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ContinueLatestOutput{
+		DeploymentID: *deploymentID,
+	}, nil
+}
+
+func (d DeploymentImpl) ForceContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error) {
+	deploymentID, err := d.getLatestDeployment(codedeployApp, codedeployGroup)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = d.ForceContinueDeployment(deploymentID)
 	if err != nil {
 		return nil, err
 	}

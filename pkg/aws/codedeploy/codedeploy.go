@@ -12,6 +12,7 @@ import (
 
 type CodeDeploy interface {
 	ContinueDeployment(deploymentID *string) (*codedeploy.ContinueDeploymentOutput, error)
+	ForceContinueDeployment(deploymentID *string) (*codedeploy.ContinueDeploymentOutput, error)
 	RollbackDeployment(deploymentID *string) (*codedeploy.StopDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) ([]*string, error)
 	CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error)
@@ -27,6 +28,16 @@ func (d CodeDeployImpl) ContinueDeployment(deploymentID *string) (*codedeploy.Co
 	input := &codedeploy.ContinueDeploymentInput{
 		DeploymentId:       deploymentID,
 		DeploymentWaitType: aws.String("READY_WAIT"),
+	}
+
+	return d.svc.ContinueDeployment(input)
+}
+
+func (d CodeDeployImpl) ForceContinueDeployment(deploymentID *string) (*codedeploy.ContinueDeploymentOutput, error) {
+
+	input := &codedeploy.ContinueDeploymentInput{
+		DeploymentId:       deploymentID,
+		DeploymentWaitType: aws.String("TERMINATION_WAIT"),
 	}
 
 	return d.svc.ContinueDeployment(input)

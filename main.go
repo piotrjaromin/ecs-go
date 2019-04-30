@@ -22,11 +22,13 @@ func main() {
 	app.Commands = []cli.Command{
 		commands.NewDeployCmd(deploySvc),
 		commands.NewContinueDeploymentsCmd(deploySvc),
+		commands.NewForceContinueDeploymentsCmd(deploySvc),
 		commands.NewListDeploymentsCmd(deploySvc),
 		commands.NewRollbackDeploymentCmd(deploySvc),
 
 		commands.NewWaitForStateCmd(deploySvc),
 		commands.NewContinueLatestDeploymentCmd(deploySvc),
+		commands.NewForceContinueLatestDeploymentCmd(deploySvc),
 		commands.NewRollbackLatestDeploymentCmd(deploySvc),
 		commands.NewWaitForLatestCmd(deploySvc),
 
