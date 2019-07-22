@@ -25,6 +25,7 @@ func NewScaleCmd(deployment services.Deployment) cli.Command {
 			cli.UintFlag{
 				Name:  "count",
 				Usage: "New value for service instance count",
+				Value: 1,
 			},
 		},
 		Action: func(c *cli.Context) error {
