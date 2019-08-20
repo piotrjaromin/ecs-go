@@ -1,8 +1,9 @@
 package services
 
 type DeployOutput struct {
-	DeploymentID      string `json:"deploymentId"`
-	TaskDefinitionArn string `json:"taskDefinitionArn"`
+	DeploymentID            string `json:"deploymentId"`
+	TaskDefinitionArn       string `json:"taskDefinitionArn"`
+	SourceTaskDefinitionArn string `json:"sourceTaskDefinitionArn"`
 }
 
 type ListDeploymentsOutput struct {

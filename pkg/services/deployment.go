@@ -107,8 +107,9 @@ func (d DeploymentImpl) Deploy(clusterName, serviceName, image, codedeployApp, c
 	}
 
 	return &DeployOutput{
-		DeploymentID:      *deployment,
-		TaskDefinitionArn: *updatedTaskDef.TaskDefinitionArn,
+		DeploymentID:            *deployment,
+		TaskDefinitionArn:       *updatedTaskDef.TaskDefinitionArn,
+		SourceTaskDefinitionArn: fmt.Sprintf("%s:%d", *taskDef.Family, *taskDef.Revision),
 	}, nil
 }
 
