@@ -1,10 +1,11 @@
 package services
 
 import (
+	"time"
+
 	"github.com/piotrjaromin/ecs-go/pkg/aws"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/codedeploy"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/ecs"
-	"time"
 
 	"fmt"
 	"strconv"
@@ -86,7 +87,7 @@ func (d DeploymentImpl) Deploy(clusterName, serviceName, image, codedeployApp, c
 		return nil, fmt.Errorf("Missing load balancers data in service")
 	}
 
-	taskDef, err := d.ecs.GetTaskDefinition(svc.TaskDefinition)
+	taskDef, err := d.ecs.GetLatestTaskDefinition(svc.TaskDefinition)
 	if err != nil {
 		return nil, err
 	}

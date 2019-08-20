@@ -1,6 +1,9 @@
 package ecs
 
 import (
+	"strings"
+
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
 
@@ -10,6 +13,7 @@ import (
 type ECS interface {
 	GetService(clusterName, serviceName *string) (*ecs.Service, error)
 	GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
+	GetLatestTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	UpdateService(toUpdate *ecs.Service) (*ecs.Service, error)
 	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string) (*ecs.TaskDefinition, error)
 }
@@ -95,6 +99,35 @@ func (e ECSImpl) GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, err
 	}
 
 	return out.TaskDefinition, nil
+}
+
+func (e ECSImpl) GetLatestTaskDefinition(currentTaskDefArn *string) (*ecs.TaskDefinition, error) {
+	taskDefFamily := GetFamilyFromTaskDefArn(*currentTaskDefArn)
+	listTaskInput := &ecs.ListTaskDefinitionsInput{
+		FamilyPrefix: taskDefFamily,
+		Sort:         aws.String("DESC"), // newest first
+		Status:       aws.String("ACTIVE"),
+	}
+
+	taskDefList, err := e.svc.ListTaskDefinitions(listTaskInput)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(taskDefList.TaskDefinitionArns) == 0 {
+		return nil, fmt.Errorf("There was no active revision for task family: %s", *taskDefFamily)
+	}
+
+	taskDefArn := taskDefList.TaskDefinitionArns[0]
+	return e.GetTaskDefinition(taskDefArn)
+}
+
+func GetFamilyFromTaskDefArn(arn string) *string {
+	// currentTaskDefArn has format arn:aws:ecs:eu-central-1:ACCOUNT_NUMBER:task-definition/SERVICE_NAME:REVISION
+	// we want to exctract SERVICE_NAME
+	taskDefFamilyWithRev := strings.Split(arn, ":")[5]
+	taskDefFamily := strings.Split(taskDefFamilyWithRev, "/")[1]
+	return &taskDefFamily
 }
 
 // func (e ECSImpl) CreateTaskDefinition() (*ecs.TaskDefinition, error) {
