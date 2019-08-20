@@ -12,7 +12,7 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 	return cli.Command{
 		Name:    "deploy",
 		Aliases: []string{"d"},
-		Usage:   "Deploys new version of app",
+		Usage:   "Deploys new version of app, takes newest task definition and updates docker image by creating new revision",
 		Flags: []cli.Flag{
 			cli.StringFlag{
 				Name:  "clusterName",
