@@ -13,7 +13,7 @@ import (
 )
 
 type Deployment interface {
-	Deploy(clusterName, serviceName, image, codedeployApp, codedeployGroup *string) (*DeployOutput, error)
+	Deploy(clusterName, serviceName, image *string, imageIndex int, codedeployApp, codedeployGroup *string) (*DeployOutput, error)
 	Scale(clusterName, serviceName *string, count uint) (*GenericOutput, error)
 	ContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
 	ForceContinueDeployment(deploymentId *string) (*ContinueDeploymentOutput, error)
@@ -77,7 +77,7 @@ func (d DeploymentImpl) ListDeployments(codedeployApp, codedeployGroup *string) 
 	}, nil
 }
 
-func (d DeploymentImpl) Deploy(clusterName, serviceName, image, codedeployApp, codedeployGroup *string) (*DeployOutput, error) {
+func (d DeploymentImpl) Deploy(clusterName, serviceName, image *string, imageIndex int, codedeployApp, codedeployGroup *string) (*DeployOutput, error) {
 	svc, err := d.ecs.GetService(clusterName, serviceName)
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (d DeploymentImpl) Deploy(clusterName, serviceName, image, codedeployApp, c
 	containerName := lb.ContainerName
 	containerPort := strconv.FormatInt(*lb.ContainerPort, 10)
 
-	updatedTaskDef, err := d.ecs.UpdateTaskDefinitions(taskDef, image)
+	updatedTaskDef, err := d.ecs.UpdateTaskDefinitions(taskDef, image, imageIndex)
 	if err != nil {
 		return nil, err
 	}

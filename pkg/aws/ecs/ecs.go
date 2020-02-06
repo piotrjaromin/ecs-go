@@ -15,7 +15,7 @@ type ECS interface {
 	GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	GetLatestTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	UpdateService(toUpdate *ecs.Service) (*ecs.Service, error)
-	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string) (*ecs.TaskDefinition, error)
+	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int) (*ecs.TaskDefinition, error)
 }
 
 type ECSImpl struct {
@@ -58,7 +58,7 @@ func (e ECSImpl) UpdateService(toUpdate *ecs.Service) (*ecs.Service, error) {
 	return updateOutput.Service, nil
 }
 
-func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string) (*ecs.TaskDefinition, error) {
+func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int) (*ecs.TaskDefinition, error) {
 
 	if len(taskDef.ContainerDefinitions) == 0 {
 		return nil, fmt.Errorf("No task definitions defined")
@@ -78,6 +78,8 @@ func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *strin
 		PlacementConstraints:    taskDef.PlacementConstraints,
 		RequiresCompatibilities: taskDef.RequiresCompatibilities,
 		TaskRoleArn:             taskDef.TaskRoleArn,
+		ExecutionRoleArn:        taskDef.ExecutionRoleArn,
+		ProxyConfiguration:      taskDef.ProxyConfiguration,
 	}
 
 	output, err := e.svc.RegisterTaskDefinition(input)

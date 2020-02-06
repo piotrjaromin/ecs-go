@@ -26,6 +26,11 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 				Name:  "image",
 				Usage: "Image with tag which will be used to create new Task Definition",
 			},
+			cli.IntFlag{
+				Name:  "imageIndex",
+				Usage: "Index of image in container definitions that should be updated",
+				Value: 0,
+			},
 			cli.StringFlag{
 				Name:  "codedeployApp",
 				Usage: "codedeploy application which is used to trigger deployment",
@@ -43,6 +48,7 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 			clusterName := c.String("clusterName")
 			serviceName := c.String("serviceName")
 			image := c.String("image")
+			imageIndex := c.Int("imageIndex")
 
 			codedeployGroup := c.String("codedeployGroup")
 			codedeployApp := c.String("codedeployApp")
@@ -55,7 +61,7 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 				codedeployApp = serviceName
 			}
 
-			output, err := deployment.Deploy(&clusterName, &serviceName, &image, &codedeployApp, &codedeployGroup)
+			output, err := deployment.Deploy(&clusterName, &serviceName, &image, imageIndex, &codedeployApp, &codedeployGroup)
 			if err != nil {
 				return err
 			}
