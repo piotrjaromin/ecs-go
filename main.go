@@ -33,6 +33,9 @@ func main() {
 		commands.NewRollbackLatestDeploymentCmd(deploySvc),
 		commands.NewWaitForLatestCmd(deploySvc),
 
+		commands.NewGetLiveVariantCmd(deploySvc),
+		commands.NewTagImageCmd(deploySvc),
+
 		// TODO for Future
 		// commands.CreateTaskDefinition(deploySvc),
 		// commands.CreateECSService(deploySvc),
