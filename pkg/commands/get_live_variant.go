@@ -7,7 +7,7 @@ import (
 
 var requiredGetLiveVariantFlags = []string{"clusterName", "serviceName"}
 
-// NewGetLiveVariantCmd creates cli command for resolving current live version of ecs service (blue|green)
+// NewGetLiveVariantCmd creates cli command for resolving current live variant of ecs service (blue|green)
 func NewGetLiveVariantCmd(deployment services.Deployment) cli.Command {
 	return cli.Command{
 		Name:    "get-live-variant",
