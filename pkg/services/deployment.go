@@ -3,6 +3,8 @@ package services
 import (
 	"time"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
+
 	"github.com/piotrjaromin/ecs-go/pkg/aws"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/codedeploy"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/ecr"
@@ -264,20 +266,16 @@ func (d DeploymentImpl) GetLiveVariant(clusterName, serviceName *string) (*strin
 	}
 	tgArn := *svc.LoadBalancers[0].TargetGroupArn
 	if strings.Contains(tgArn, VariantBlue) {
-		return strAddr(VariantBlue), nil
+		return awssdk.String(VariantBlue), nil
 	}
 	if strings.Contains(tgArn, VariantGreen) {
-		return strAddr(VariantGreen), nil
+		return awssdk.String(VariantGreen), nil
 	}
 	return nil, fmt.Errorf("Cannot find variant name in target group ARN: %s", tgArn)
 }
 
 func (d DeploymentImpl) TagImage(repositoryName, currentTag, newTag *string) error {
 	return d.ecr.TagImage(repositoryName, currentTag, newTag)
-}
-
-func strAddr(v string) *string {
-	return &v
 }
 
 func NewDeployment() (Deployment, error) {
