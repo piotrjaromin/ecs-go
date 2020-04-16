@@ -3,13 +3,21 @@ package services
 import (
 	"time"
 
+	awssdk "github.com/aws/aws-sdk-go/aws"
+
 	"github.com/piotrjaromin/ecs-go/pkg/aws"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/codedeploy"
+	"github.com/piotrjaromin/ecs-go/pkg/aws/ecr"
 	"github.com/piotrjaromin/ecs-go/pkg/aws/ecs"
 
 	"fmt"
 	"strconv"
 	"strings"
+)
+
+const (
+	VariantBlue  = "blue"
+	VariantGreen = "green"
 )
 
 type Deployment interface {
@@ -24,10 +32,13 @@ type Deployment interface {
 	ForceContinueLatestDeployment(codedeployApp, codedeployGroup *string) (*ContinueLatestOutput, error)
 	WaitForState(deploymentId, state *string, waitTime int) (*WaitForStateOutput, error)
 	WaitForLatest(codedeployApp, codedeployGroup, state *string, waitTime int) (*WaitForStateOutput, error)
+	GetLiveVariant(clusterName, serviceName *string) (*string, error)
+	TagImage(repositoryName, currentTag, newTag *string) error
 }
 
 type DeploymentImpl struct {
 	ecs        ecs.ECS
+	ecr        ecr.ECR
 	codedeploy codedeploy.CodeDeploy
 }
 
@@ -239,6 +250,34 @@ func (d DeploymentImpl) getLatestDeployment(codedeployApp, codedeployGroup *stri
 	return &deploymentID, nil
 }
 
+func (d DeploymentImpl) GetLiveVariant(clusterName, serviceName *string) (*string, error) {
+	svc, err := d.ecs.GetService(clusterName, serviceName)
+	if err != nil {
+		return nil, err
+	}
+	if len(svc.TaskSets) > 1 {
+		return nil, fmt.Errorf("Service is during deployment")
+	}
+	if len(svc.TaskSets) == 0 {
+		return nil, fmt.Errorf("Service has no task set")
+	}
+	if len(svc.LoadBalancers) == 0 {
+		return nil, fmt.Errorf("Missing load balancers data in service")
+	}
+	tgArn := *svc.LoadBalancers[0].TargetGroupArn
+	if strings.Contains(tgArn, VariantBlue) {
+		return awssdk.String(VariantBlue), nil
+	}
+	if strings.Contains(tgArn, VariantGreen) {
+		return awssdk.String(VariantGreen), nil
+	}
+	return nil, fmt.Errorf("Cannot find variant name in target group ARN: %s", tgArn)
+}
+
+func (d DeploymentImpl) TagImage(repositoryName, currentTag, newTag *string) error {
+	return d.ecr.TagImage(repositoryName, currentTag, newTag)
+}
+
 func NewDeployment() (Deployment, error) {
 	sess, err := aws.GetSession()
 	if err != nil {
@@ -247,8 +286,10 @@ func NewDeployment() (Deployment, error) {
 
 	ecsSvc := ecs.NewEcs(sess)
 	codedeploySvc := codedeploy.NewCodeDeploy(sess)
+	ecrSvc := ecr.NewEcr(sess)
 	return &DeploymentImpl{
 		ecs:        ecsSvc,
 		codedeploy: codedeploySvc,
+		ecr:        ecrSvc,
 	}, nil
 }
