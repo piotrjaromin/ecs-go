@@ -134,12 +134,8 @@ func (e ECSImpl) DescribeServices() ([]*ecs.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(clsArns) == 0 {
-		return nil, fmt.Errorf("there is no clusters")
-	}
 
 	allSvc := make([]*ecs.Service, 0, 10)
-
 	for _, arn := range clsArns {
 		svcArns := make([]*string, 0, 10)
 		err := e.svc.ListServicesPages(&ecs.ListServicesInput{Cluster: arn}, func(page *ecs.ListServicesOutput, lastPage bool) bool {
@@ -149,9 +145,7 @@ func (e ECSImpl) DescribeServices() ([]*ecs.Service, error) {
 		if err != nil {
 			return nil, err
 		}
-		if len(svcArns) == 0 {
-			continue
-		}
+		// describe operation takes max 10 service arns
 		for i := 0; i < len(svcArns); i += 10 {
 			end := i + 10
 			if end > len(svcArns) {
