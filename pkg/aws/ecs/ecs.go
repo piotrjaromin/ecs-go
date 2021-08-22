@@ -11,6 +11,7 @@ import (
 )
 
 type ECS interface {
+	DescribeServices() ([]*ecs.Service, error)
 	GetService(clusterName, serviceName *string) (*ecs.Service, error)
 	GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	GetLatestTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
@@ -122,6 +123,52 @@ func (e ECSImpl) GetLatestTaskDefinition(currentTaskDefArn *string) (*ecs.TaskDe
 
 	taskDefArn := taskDefList.TaskDefinitionArns[0]
 	return e.GetTaskDefinition(taskDefArn)
+}
+
+func (e ECSImpl) DescribeServices() ([]*ecs.Service, error) {
+	clsArns := make([]*string, 0, 10)
+	err := e.svc.ListClustersPages(&ecs.ListClustersInput{}, func(page *ecs.ListClustersOutput, lastPage bool) bool {
+		clsArns = append(clsArns, page.ClusterArns...)
+		return true
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(clsArns) == 0 {
+		return nil, fmt.Errorf("there is no clusters")
+	}
+
+	allSvc := make([]*ecs.Service, 0, 10)
+
+	for _, arn := range clsArns {
+		svcArns := make([]*string, 0, 10)
+		err := e.svc.ListServicesPages(&ecs.ListServicesInput{Cluster: arn}, func(page *ecs.ListServicesOutput, lastPage bool) bool {
+			svcArns = append(svcArns, page.ServiceArns...)
+			return true
+		})
+		if err != nil {
+			return nil, err
+		}
+		if len(svcArns) == 0 {
+			continue
+		}
+		for i := 0; i < len(svcArns); i += 10 {
+			end := i + 10
+			if end > len(svcArns) {
+				end = len(svcArns)
+			}
+			output, err := e.svc.DescribeServices(&ecs.DescribeServicesInput{
+				Cluster:  arn,
+				Services: svcArns[i:end],
+			})
+			if err != nil {
+				return nil, err
+			}
+			allSvc = append(allSvc, output.Services...)
+		}
+	}
+
+	return allSvc, nil
 }
 
 func GetFamilyFromTaskDefArn(arn string) *string {

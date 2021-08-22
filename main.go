@@ -35,6 +35,7 @@ func main() {
 
 		commands.NewGetLiveVariantCmd(deploySvc),
 		commands.NewTagImageCmd(deploySvc),
+		commands.NewListServicesCmd(deploySvc),
 
 		// TODO for Future
 		// commands.CreateTaskDefinition(deploySvc),

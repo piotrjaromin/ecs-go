@@ -30,3 +30,10 @@ type WaitForStateOutput struct {
 	Waited string `json:"waited"`
 	State  string `json:"state"`
 }
+
+type ListServicesItemOutput struct {
+	ServiceName    *string `json:"serviceName"`
+	ClusterArn     *string `json:"clusterArn"`
+	ContainerPort  *int64  `json:"containerPort"`
+	TargetGroupArn *string `json:"targetGroupArn"`
+}

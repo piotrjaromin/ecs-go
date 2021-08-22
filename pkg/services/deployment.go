@@ -34,6 +34,7 @@ type Deployment interface {
 	WaitForLatest(codedeployApp, codedeployGroup, state *string, waitTime int) (*WaitForStateOutput, error)
 	GetLiveVariant(clusterName, serviceName *string) (*string, error)
 	TagImage(repositoryName, currentTag, newTag *string) error
+	ListServices() ([]*ListServicesItemOutput, error)
 }
 
 type DeploymentImpl struct {
@@ -276,6 +277,27 @@ func (d DeploymentImpl) GetLiveVariant(clusterName, serviceName *string) (*strin
 
 func (d DeploymentImpl) TagImage(repositoryName, currentTag, newTag *string) error {
 	return d.ecr.TagImage(repositoryName, currentTag, newTag)
+}
+
+func (d DeploymentImpl) ListServices() ([]*ListServicesItemOutput, error) {
+	svcList, err := d.ecs.DescribeServices()
+	if err != nil {
+		return nil, err
+	}
+	output := make([]*ListServicesItemOutput, len(svcList))
+	for i, svc := range svcList {
+		item := &ListServicesItemOutput{
+			ServiceName: svc.ServiceName,
+			ClusterArn:  svc.ClusterArn,
+		}
+		if len(svc.LoadBalancers) > 0 {
+			item.ContainerPort = svc.LoadBalancers[0].ContainerPort
+			item.TargetGroupArn = svc.LoadBalancers[0].TargetGroupArn
+		}
+		output[i] = item
+	}
+
+	return output, nil
 }
 
 func NewDeployment() (Deployment, error) {
