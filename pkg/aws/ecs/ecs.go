@@ -10,6 +10,10 @@ import (
 	"fmt"
 )
 
+const (
+	descServiceLimit = 10 // describe operation takes max 10 service arns
+)
+
 type ECS interface {
 	DescribeServices() ([]*ecs.Service, error)
 	GetService(clusterName, serviceName *string) (*ecs.Service, error)
@@ -145,9 +149,8 @@ func (e ECSImpl) DescribeServices() ([]*ecs.Service, error) {
 		if err != nil {
 			return nil, err
 		}
-		// describe operation takes max 10 service arns
-		for i := 0; i < len(svcArns); i += 10 {
-			end := i + 10
+		for i := 0; i < len(svcArns); i += descServiceLimit {
+			end := i + descServiceLimit
 			if end > len(svcArns) {
 				end = len(svcArns)
 			}
