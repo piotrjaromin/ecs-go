@@ -4,9 +4,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/codedeploy"
 	"github.com/aws/aws-sdk-go/service/codedeploy/codedeployiface"
+	"github.com/aws/aws-sdk-go/service/ecs"
+
+	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var testDeploy1 = "firstDeployID"
@@ -85,8 +87,9 @@ func TestCreateDeployment(t *testing.T) {
 	taskDefinitionArn := "taskDefinitionArn"
 	containerName := "test-name"
 	containerPort := "3000"
+	capacityProviderStrategy := make([]*ecs.CapacityProviderStrategyItem, 0)
 
-	id, err := testCodeSvc.CreateDeployment(&codedeployApp, &codedeployGroup, &taskDefinitionArn, &containerName, &containerPort)
+	id, err := testCodeSvc.CreateDeployment(&codedeployApp, &codedeployGroup, &taskDefinitionArn, &containerName, &containerPort, capacityProviderStrategy)
 
 	assert.Nil(t, err, "Error should not exist")
 	assert.Equal(t, *id, "created-deployment")

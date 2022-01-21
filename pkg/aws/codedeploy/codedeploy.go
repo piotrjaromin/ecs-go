@@ -2,12 +2,15 @@ package codedeploy
 
 import (
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/codedeploy"
 	"github.com/aws/aws-sdk-go/service/codedeploy/codedeployiface"
-	"time"
+	"github.com/aws/aws-sdk-go/service/ecs"
 )
 
 type CodeDeploy interface {
@@ -15,7 +18,7 @@ type CodeDeploy interface {
 	ForceContinueDeployment(deploymentID *string) (*codedeploy.ContinueDeploymentOutput, error)
 	RollbackDeployment(deploymentID *string) (*codedeploy.StopDeploymentOutput, error)
 	ListDeployments(codedeployApp, codedeployGroup *string) ([]*string, error)
-	CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error)
+	CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string, capacityProviderStrategy []*ecs.CapacityProviderStrategyItem) (*string, error)
 	WaitForSate(deploymentID *string, state *string, waitTimeInSeconds int) error
 }
 
@@ -70,10 +73,13 @@ func (d CodeDeployImpl) ListDeployments(codedeployApp, codedeployGroup *string) 
 	return output.Deployments, nil
 }
 
-func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string) (*string, error) {
+func (d CodeDeployImpl) CreateDeployment(codedeployApp, codedeployGroup, taskDefinitionArn, containerName, containerPort *string, capacityProviderStrategy []*ecs.CapacityProviderStrategyItem) (*string, error) {
 	desc := fmt.Sprintf("Handled by ecs-go at %v", time.Now())
 	enabled := true
-	appSecContent := appSpec(taskDefinitionArn, containerName, containerPort)
+	appSecContent, err := appSpec(taskDefinitionArn, containerName, containerPort, capacityProviderStrategy)
+	if err != nil {
+		return nil, err
+	}
 
 	h := sha256.New()
 	h.Write([]byte(appSecContent))
@@ -136,7 +142,16 @@ func (d CodeDeployImpl) WaitForSate(deploymentID *string, state *string, waitTim
 	return nil
 }
 
-func appSpec(taskDefinitionWithRevisionArn, containerName, containerPort *string) string {
+func appSpec(taskDefinitionWithRevisionArn, containerName, containerPort *string, capacityProviderStrategy []*ecs.CapacityProviderStrategyItem) (string, error) {
+	capacityProviderStrategyJSON := ""
+	if len(capacityProviderStrategy) > 0 {
+		capacityBytes, err := json.Marshal(capacityProviderStrategy)
+		if err != nil {
+			return "", err
+		}
+		capacityProviderStrategyJSON = fmt.Sprintf(`,"CapacityProviderStrategy": %s`, capacityBytes)
+	}
+
 	return fmt.Sprintf(`{
 		"version": 1,
 		"Resources": [
@@ -148,12 +163,12 @@ func appSpec(taskDefinitionWithRevisionArn, containerName, containerPort *string
 						"LoadBalancerInfo": {
 							"ContainerName": "%s",
 							"ContainerPort": %s
-						}
+						}%s
 					}
 				}
 			}
 		]
-	}`, *taskDefinitionWithRevisionArn, *containerName, *containerPort)
+	}`, *taskDefinitionWithRevisionArn, *containerName, *containerPort, capacityProviderStrategyJSON), nil
 }
 
 func NewCodeDeploy(sess *session.Session) CodeDeploy {

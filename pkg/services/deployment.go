@@ -112,7 +112,7 @@ func (d DeploymentImpl) Deploy(clusterName, serviceName, image *string, imageInd
 		return nil, err
 	}
 
-	deployment, err := d.codedeploy.CreateDeployment(codedeployApp, codedeployGroup, updatedTaskDef.TaskDefinitionArn, containerName, &containerPort)
+	deployment, err := d.codedeploy.CreateDeployment(codedeployApp, codedeployGroup, updatedTaskDef.TaskDefinitionArn, containerName, &containerPort, svc.CapacityProviderStrategy)
 	if err != nil {
 		return nil, err
 	}
