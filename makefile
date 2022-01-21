@@ -17,8 +17,8 @@ clean:
 run:
 	$(GOBUILD) -o $(BINARY_NAME) -v ./...
 	./$(BINARY_NAME)
-deps:
-	GO111MODULE=on $(GOMOD) vendor
+install:
+	go mod tidy
 
 docker:
 	docker build -t ecs-go .

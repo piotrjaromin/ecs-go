@@ -1,10 +1,10 @@
 FROM golang:alpine AS build
 ADD . /src
 
-RUN apk add -U --no-cache ca-certificates git
+RUN apk add -U --no-cache ca-certificates git make
 
 RUN cd /src && \
-    go mod vendor && \
+    make install && \
     go build -o ecs-go
 
 # final stage
