@@ -64,7 +64,7 @@ func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *strin
 		return nil, fmt.Errorf("No task definitions defined")
 	}
 
-	taskDef.ContainerDefinitions[0].Image = image
+	taskDef.ContainerDefinitions[imageIndex].Image = image
 
 	input := &ecs.RegisterTaskDefinitionInput{
 		ContainerDefinitions:    taskDef.ContainerDefinitions,
