@@ -7,11 +7,20 @@ Tool updates docker image in task definition, it searches given cluster for serv
 ## Supported commands
 
 ```bash
-deploy, d                Deploys new version of app
-continue-deployment, cd  Allows active deployment to continue deployment
-list-deployments, ld     Deploys new version of app
-rollback-deployment, rd  Rollbacks active deployment
-help, h                  Shows a list of commands or help for one command
+deploy, d                             Deploys new version of app, takes newest task definition and updates docker image by creating new revision
+scale, s                              Changes number of tasks
+continue-deployment, cd               Allows active deployment to continue deployment
+force-continue-deployment, cd         Forces active deployment to continue deployment (kills replacement task before its time elapsed
+list-deployments, ld                  Deploys new version of app
+rollback-deployment, rd               Rollbacks active deployment
+wait-for-state, cd                    waits until given deployment reaches given state
+continue-latest-deployment, cd        Trigger continue on latest deployment for given app and group
+force-continue-latest-deployment, cd  Trigger force continue on latest deployment for given app and group
+rollback-latest-deployment, cd        Trigger rollback on latest deployment for given app and group
+wait-for-latest, cd                   waits until given deployment reaches given state
+get-live-variant, glv                 Gets live variant of service
+tag-image, ti                         Tags ECR image
+help, h                               Shows a list of commands or help for one command
 ```
 
 ## Sample call
