@@ -107,7 +107,14 @@ func (d DeploymentImpl) Deploy(clusterName, serviceName, image *string, imageInd
 	containerName := lb.ContainerName
 	containerPort := strconv.FormatInt(*lb.ContainerPort, 10)
 
-	updatedTaskDef, err := d.ecs.UpdateTaskDefinitions(taskDef, image, imageIndex)
+	nextVariant := awssdk.String(VariantBlue)
+	// we are ignoring error, if it is first deployment there might not be existing variant
+	currentVariant, _ := d.GetLiveVariant(clusterName, serviceName)
+	if currentVariant == nil || *currentVariant == VariantBlue {
+		nextVariant = awssdk.String(VariantGreen)
+	}
+
+	updatedTaskDef, err := d.ecs.UpdateTaskDefinitions(taskDef, image, imageIndex, nextVariant)
 	if err != nil {
 		return nil, err
 	}

@@ -15,7 +15,7 @@ type ECS interface {
 	GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	GetLatestTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	UpdateService(toUpdate *ecs.Service) (*ecs.Service, error)
-	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int) (*ecs.TaskDefinition, error)
+	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int, variant *string) (*ecs.TaskDefinition, error)
 }
 
 type ECSImpl struct {
@@ -35,7 +35,7 @@ func (e ECSImpl) GetService(clusterName, serviceName *string) (*ecs.Service, err
 	}
 
 	if len(svcList.Services) == 0 {
-		return nil, fmt.Errorf("Unable to find %s service in %s cluster", *clusterName, *serviceName)
+		return nil, fmt.Errorf("Unable to find %s service in %s cluster", *serviceName, *clusterName)
 	}
 
 	return svcList.Services[0], nil
@@ -58,13 +58,20 @@ func (e ECSImpl) UpdateService(toUpdate *ecs.Service) (*ecs.Service, error) {
 	return updateOutput.Service, nil
 }
 
-func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int) (*ecs.TaskDefinition, error) {
+func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int, variant *string) (*ecs.TaskDefinition, error) {
 
 	if len(taskDef.ContainerDefinitions) == 0 {
 		return nil, fmt.Errorf("No task definitions defined")
 	}
 
 	taskDef.ContainerDefinitions[imageIndex].Image = image
+
+	for _, cont := range taskDef.ContainerDefinitions {
+		cont.Environment = append(cont.Environment, &ecs.KeyValuePair{
+			Name:  aws.String("VARIANT"),
+			Value: variant,
+		})
+	}
 
 	input := &ecs.RegisterTaskDefinitionInput{
 		ContainerDefinitions:    taskDef.ContainerDefinitions,
