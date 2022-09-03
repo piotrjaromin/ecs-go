@@ -15,7 +15,7 @@ type ECS interface {
 	GetTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	GetLatestTaskDefinition(taskDefArn *string) (*ecs.TaskDefinition, error)
 	UpdateService(toUpdate *ecs.Service) (*ecs.Service, error)
-	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int, variant *string) (*ecs.TaskDefinition, error)
+	UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, images []string, imageIndexes []int, variant *string) (*ecs.TaskDefinition, error)
 }
 
 type ECSImpl struct {
@@ -58,13 +58,15 @@ func (e ECSImpl) UpdateService(toUpdate *ecs.Service) (*ecs.Service, error) {
 	return updateOutput.Service, nil
 }
 
-func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, image *string, imageIndex int, variant *string) (*ecs.TaskDefinition, error) {
+func (e ECSImpl) UpdateTaskDefinitions(taskDef *ecs.TaskDefinition, images []string, imageIndexes []int, variant *string) (*ecs.TaskDefinition, error) {
 
 	if len(taskDef.ContainerDefinitions) == 0 {
 		return nil, fmt.Errorf("No task definitions defined")
 	}
 
-	taskDef.ContainerDefinitions[imageIndex].Image = image
+	for index, imageIndex := range imageIndexes {
+		taskDef.ContainerDefinitions[imageIndex].Image = &images[index]
+	}
 
 	for _, cont := range taskDef.ContainerDefinitions {
 		cont.Environment = append(cont.Environment, &ecs.KeyValuePair{
@@ -133,7 +135,7 @@ func (e ECSImpl) GetLatestTaskDefinition(currentTaskDefArn *string) (*ecs.TaskDe
 
 func GetFamilyFromTaskDefArn(arn string) *string {
 	// currentTaskDefArn has format arn:aws:ecs:eu-central-1:ACCOUNT_NUMBER:task-definition/SERVICE_NAME:REVISION
-	// we want to exctract SERVICE_NAME
+	// we want to extract SERVICE_NAME
 	taskDefFamilyWithRev := strings.Split(arn, ":")[5]
 	taskDefFamily := strings.Split(taskDefFamilyWithRev, "/")[1]
 	return &taskDefFamily

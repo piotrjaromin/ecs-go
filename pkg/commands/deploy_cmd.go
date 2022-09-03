@@ -1,6 +1,8 @@
 package commands
 
 import (
+	"fmt"
+
 	"github.com/piotrjaromin/ecs-go/pkg/services"
 	"github.com/urfave/cli"
 )
@@ -9,6 +11,8 @@ var requiredDeployFlags = []string{"clusterName", "serviceName", "image"}
 
 // NewDeployCmd creates cli command for deploying new version of ecs service
 func NewDeployCmd(deployment services.Deployment) cli.Command {
+	defaultIndexes := cli.IntSlice{0}
+
 	return cli.Command{
 		Name:    "deploy",
 		Aliases: []string{"d"},
@@ -22,14 +26,14 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 				Name:  "serviceName",
 				Usage: "existing service in ECS cluster which should be updated",
 			},
-			cli.StringFlag{
+			cli.StringSliceFlag{
 				Name:  "image",
 				Usage: "Image with tag which will be used to create new Task Definition",
 			},
-			cli.IntFlag{
+			cli.IntSliceFlag{
 				Name:  "imageIndex",
 				Usage: "Index of image in container definitions that should be updated",
-				Value: 0,
+				Value: &defaultIndexes,
 			},
 			cli.StringFlag{
 				Name:  "codedeployApp",
@@ -47,8 +51,12 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 
 			clusterName := c.String("clusterName")
 			serviceName := c.String("serviceName")
-			image := c.String("image")
-			imageIndex := c.Int("imageIndex")
+			images := c.StringSlice("image")
+			imageIndexes := c.IntSlice("imageIndex")
+
+			if len(imageIndexes) != len(images) {
+				return fmt.Errorf("imageIndexes and images must be repeated same amount of times")
+			}
 
 			codedeployGroup := c.String("codedeployGroup")
 			codedeployApp := c.String("codedeployApp")
@@ -61,7 +69,7 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 				codedeployApp = serviceName
 			}
 
-			output, err := deployment.Deploy(&clusterName, &serviceName, &image, imageIndex, &codedeployApp, &codedeployGroup)
+			output, err := deployment.Deploy(&clusterName, &serviceName, images, imageIndexes, &codedeployApp, &codedeployGroup)
 			if err != nil {
 				return err
 			}
