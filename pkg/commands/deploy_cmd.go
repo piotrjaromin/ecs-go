@@ -11,8 +11,6 @@ var requiredDeployFlags = []string{"clusterName", "serviceName", "image"}
 
 // NewDeployCmd creates cli command for deploying new version of ecs service
 func NewDeployCmd(deployment services.Deployment) cli.Command {
-	defaultIndexes := cli.IntSlice{0}
-
 	return cli.Command{
 		Name:    "deploy",
 		Aliases: []string{"d"},
@@ -33,7 +31,7 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 			cli.IntSliceFlag{
 				Name:  "imageIndex",
 				Usage: "Index of image in container definitions that should be updated",
-				Value: &defaultIndexes,
+				Value: &cli.IntSlice{},
 			},
 			cli.StringFlag{
 				Name:  "codedeployApp",
@@ -53,6 +51,10 @@ func NewDeployCmd(deployment services.Deployment) cli.Command {
 			serviceName := c.String("serviceName")
 			images := c.StringSlice("image")
 			imageIndexes := c.IntSlice("imageIndex")
+
+			if len(imageIndexes) == 0 {
+				imageIndexes = append(imageIndexes, 0)
+			}
 
 			if len(imageIndexes) != len(images) {
 				return fmt.Errorf("imageIndexes and images must be repeated same amount of times")
